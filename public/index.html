@@ -173,7 +173,7 @@
             </div>
 
             <div class="markdown-code" id="markdownCode">
-                [![Profile Views](https://git-hub-daily-counter.vercel.app/api/counter/RamithaHeshan33/image)](https://github.com/RamithaHeshan33)
+                [![Profile Views](http://localhost:3000/api/counter/Your-Github-Username/image)](https://github.com/Your-Github-Username)
             </div>
 
             <button class="copy-button" onclick="copyMarkdown()">Copy Markdown</button>
@@ -198,7 +198,7 @@
                 counterImage.src = `/api/counter/${username}/image`;
                 
                 // Update markdown code
-                markdownCode.textContent = `[![Profile Views](https://git-hub-daily-counter.vercel.app/api/counter/${username}/image)](https://github.com/${username})`;
+                markdownCode.textContent = `[![Profile Views](http://localhost:3000/api/counter/${username}/image)](https://github.com/${username})`;
             } catch (error) {
                 console.error('Error updating counter:', error);
             }
