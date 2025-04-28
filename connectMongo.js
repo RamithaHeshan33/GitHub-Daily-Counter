@@ -8,7 +8,7 @@ async function connectMongo() {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(process.env.MONGODB_URI, {
+    cached.promise = mongoose.connect("mongodb+srv://view_counter:CK14KeR3xJiJZfln@cluster0.2pofasq.mongodb.net/", {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     }).then((mongoose) => mongoose);
