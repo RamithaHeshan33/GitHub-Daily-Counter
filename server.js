@@ -2,7 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+const connectMongo = require('./connectMongo'); // <= new import
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,7 +26,7 @@ const MAX_REQUESTS = 10; // 10 requests per minute
 const rateLimiter = (req, res, next) => {
     const ip = req.ip;
     const now = Date.now();
-    
+
     if (!rateLimit.has(ip)) {
         rateLimit.set(ip, { count: 1, timestamp: now });
         return next();
@@ -45,14 +46,6 @@ const rateLimiter = (req, res, next) => {
     next();
 };
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
-
 // View Counter Schema
 const viewCounterSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
@@ -65,7 +58,8 @@ const viewCounterSchema = new mongoose.Schema({
     }]
 });
 
-const ViewCounter = mongoose.model('ViewCounter', viewCounterSchema);
+const ViewCounter = mongoose.models.ViewCounter || mongoose.model('ViewCounter', viewCounterSchema); 
+// important fix for Vercel (model redefinition issue)
 
 // Helper function to check if GitHub user exists
 async function githubUserExists(username) {
@@ -76,19 +70,21 @@ async function githubUserExists(username) {
 // Routes
 app.get('/api/counter/:username', async (req, res) => {
     try {
+        await connectMongo(); // Connect to MongoDB
+
         const { username } = req.params;
         const exists = await githubUserExists(username);
         if (!exists) {
             return res.status(404).json({ error: 'Cannot find a GitHub account with your username' });
         }
         let counter = await ViewCounter.findOne({ username });
-        
+
         if (!counter) {
             counter = new ViewCounter({ username });
             await counter.save();
         }
 
-        // Check if 24 hours have passed since last reset
+        // Reset if 24 hours passed
         const now = new Date();
         const lastReset = new Date(counter.lastReset);
         const hoursDiff = (now - lastReset) / (1000 * 60 * 60);
@@ -101,7 +97,7 @@ app.get('/api/counter/:username', async (req, res) => {
             await counter.save();
         }
 
-        res.json({ 
+        res.json({
             count: counter.count,
             uniqueVisitors: counter.uniqueVisitors
         });
@@ -112,14 +108,16 @@ app.get('/api/counter/:username', async (req, res) => {
 
 app.post('/api/counter/:username/increment', rateLimiter, async (req, res) => {
     try {
+        await connectMongo(); // Connect to MongoDB
+
         const { username } = req.params;
         let counter = await ViewCounter.findOne({ username });
-        
+
         if (!counter) {
             counter = new ViewCounter({ username });
         }
 
-        // Check if 24 hours have passed since last reset
+        // Reset if 24 hours passed
         const now = new Date();
         const lastReset = new Date(counter.lastReset);
         const hoursDiff = (now - lastReset) / (1000 * 60 * 60);
@@ -131,13 +129,12 @@ app.post('/api/counter/:username/increment', rateLimiter, async (req, res) => {
             counter.uniqueVisitors = 0;
         }
 
-        // Check if this is a unique visitor
+        // Unique visitor check
         const isUniqueVisitor = !counter.views.some(view => view.ip === req.ip);
         if (isUniqueVisitor) {
             counter.uniqueVisitors += 1;
         }
 
-        // Add view record
         counter.views.push({
             timestamp: now,
             ip: req.ip
@@ -146,7 +143,7 @@ app.post('/api/counter/:username/increment', rateLimiter, async (req, res) => {
         counter.count += 1;
         await counter.save();
 
-        res.json({ 
+        res.json({
             count: counter.count,
             uniqueVisitors: counter.uniqueVisitors
         });
@@ -155,9 +152,10 @@ app.post('/api/counter/:username/increment', rateLimiter, async (req, res) => {
     }
 });
 
-// Route to get counter as an image (and increment count)
 app.get('/api/counter/:username/image', async (req, res) => {
     try {
+        await connectMongo(); // Connect to MongoDB
+
         const { username } = req.params;
         const exists = await githubUserExists(username);
         if (!exists) {
@@ -172,13 +170,14 @@ app.get('/api/counter/:username/image', async (req, res) => {
             res.setHeader('Content-Type', 'image/svg+xml');
             return res.send(svg);
         }
+
         let counter = await ViewCounter.findOne({ username });
-        
+
         if (!counter) {
             counter = new ViewCounter({ username });
         }
 
-        // Check if 24 hours have passed since last reset
+        // Reset if 24 hours passed
         const now = new Date();
         const lastReset = new Date(counter.lastReset);
         const hoursDiff = (now - lastReset) / (1000 * 60 * 60);
@@ -190,13 +189,11 @@ app.get('/api/counter/:username/image', async (req, res) => {
             counter.uniqueVisitors = 0;
         }
 
-        // Check if this is a unique visitor
         const isUniqueVisitor = !counter.views.some(view => view.ip === req.ip);
         if (isUniqueVisitor) {
             counter.uniqueVisitors += 1;
         }
 
-        // Add view record
         counter.views.push({
             timestamp: now,
             ip: req.ip
@@ -205,7 +202,7 @@ app.get('/api/counter/:username/image', async (req, res) => {
         counter.count += 1;
         await counter.save();
 
-        // Create SVG image
+        // SVG Output
         const svg = `
             <svg xmlns="http://www.w3.org/2000/svg" width="150" height="20" viewBox="0 0 150 20">
                 <rect width="150" height="20" fill="#0e75b6" rx="3"/>
@@ -224,4 +221,4 @@ app.get('/api/counter/:username/image', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-}); 
+});
