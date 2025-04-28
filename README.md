@@ -1,1 +1,1 @@
-"# GitHub-Daily-Counter" 
+# GitHub-Daily-Counter
