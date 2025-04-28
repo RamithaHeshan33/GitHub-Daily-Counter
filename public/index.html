@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Profile View Counter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2ea44f;
+            --text-color: #24292e;
+            --bg-color: #f6f8fa;
+            --card-bg: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .counter-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .counter-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .counter-value {
+            font-size: 4rem;
+            font-weight: 600;
+            margin: 1rem 0;
+            color: var(--text-color);
+        }
+
+        .counter-label {
+            font-size: 1.1rem;
+            color: #586069;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #586069;
+            margin-top: 0.5rem;
+        }
+
+        .reset-info {
+            font-size: 0.9rem;
+            color: #586069;
+            margin-top: 1rem;
+        }
+
+        .username-input {
+            width: 100%;
+            padding: 0.5rem;
+            margin: 1rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .counter-image {
+            margin: 1rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .copy-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .copy-button:hover {
+            background-color: #2c974b;
+        }
+
+        .markdown-code {
+            background-color: #f6f8fa;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 1rem 0;
+            white-space: pre-wrap;
+        }
+
+        @media (max-width: 600px) {
+            .counter-value {
+                font-size: 3rem;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="counter-card">
+            <h1 class="counter-title">GitHub Profile View Counter</h1>
+            
+            <input type="text" id="username" class="username-input" placeholder="Enter GitHub username">
+            
+            <div class="counter-label">Profile Views Today</div>
+            <div class="counter-value" id="counter">0</div>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value" id="uniqueVisitors">0</div>
+                    <div class="stat-label">Unique Visitors</div>
+                </div>
+            </div>
+
+            <div class="reset-info">
+                Counter resets every 24 hours
+            </div>
+
+            <div class="counter-image">
+                <img id="counterImage" src="" alt="Profile Views Counter">
+            </div>
+
+            <div class="markdown-code" id="markdownCode">
+                [![Profile Views](http://localhost:3000/api/counter/RamithaHeshan33/image)](https://github.com/RamithaHeshan33)
+            </div>
+
+            <button class="copy-button" onclick="copyMarkdown()">Copy Markdown</button>
+        </div>
+    </div>
+
+    <script>
+        const usernameInput = document.getElementById('username');
+        const counterImage = document.getElementById('counterImage');
+        const markdownCode = document.getElementById('markdownCode');
+
+        // Function to update the counter (GET only)
+        async function updateCounter() {
+            try {
+                const username = usernameInput.value;
+                const response = await fetch(`/api/counter/${username}`);
+                const data = await response.json();
+                document.getElementById('counter').textContent = data.count;
+                document.getElementById('uniqueVisitors').textContent = data.uniqueVisitors;
+                
+                // Update counter image
+                counterImage.src = `/api/counter/${username}/image`;
+                
+                // Update markdown code
+                markdownCode.textContent = `[![Profile Views](http://localhost:3000/api/counter/${username}/image)](https://github.com/${username})`;
+            } catch (error) {
+                console.error('Error updating counter:', error);
+            }
+        }
+
+        // Function to copy markdown code
+        function copyMarkdown() {
+            const text = markdownCode.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Markdown code copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        }
+
+        // Update counter when username changes
+        usernameInput.addEventListener('change', updateCounter);
+
+        // Update counter when page loads
+        updateCounter();
+    </script>
+</body>
+</html> 
