@@ -24,3 +24,11 @@ Track how many people view your GitHub profile **each day**, with a view count t
 ## 📄 License
 
 MIT © [Ramitha Heshan](https://github.com/RamithaHeshan33)
+
+## Screenshot
+
+![image](https://github.com/user-attachments/assets/922c07a6-c8d3-498c-8816-a859bdfa8d0a)
+
+![image](https://github.com/user-attachments/assets/626a4853-7e91-433d-bd52-7a1bfd433b65)
+
+
