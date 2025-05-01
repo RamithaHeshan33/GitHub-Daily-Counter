@@ -91,9 +91,11 @@ app.get('/api/counter/:username', async (req, res) => {
         // Check if 24 hours have passed since last reset
         const now = new Date();
         const lastReset = new Date(counter.lastReset);
-        const hoursDiff = (now - lastReset) / (1000 * 60 * 60);
+        const isNewDay = now.getDate() !== lastReset.getDate() || 
+                        now.getMonth() !== lastReset.getMonth() || 
+                        now.getFullYear() !== lastReset.getFullYear();
 
-        if (hoursDiff >= 24) {
+        if (isNewDay) {
             counter.count = 0;
             counter.lastReset = now;
             counter.views = [];
@@ -122,9 +124,11 @@ app.post('/api/counter/:username/increment', rateLimiter, async (req, res) => {
         // Check if 24 hours have passed since last reset
         const now = new Date();
         const lastReset = new Date(counter.lastReset);
-        const hoursDiff = (now - lastReset) / (1000 * 60 * 60);
+        const isNewDay = now.getDate() !== lastReset.getDate() || 
+                        now.getMonth() !== lastReset.getMonth() || 
+                        now.getFullYear() !== lastReset.getFullYear();
 
-        if (hoursDiff >= 24) {
+        if (isNewDay) {
             counter.count = 0;
             counter.lastReset = now;
             counter.views = [];
@@ -181,9 +185,11 @@ app.get('/api/counter/:username/image', async (req, res) => {
         // Check if 24 hours have passed since last reset
         const now = new Date();
         const lastReset = new Date(counter.lastReset);
-        const hoursDiff = (now - lastReset) / (1000 * 60 * 60);
+        const isNewDay = now.getDate() !== lastReset.getDate() || 
+                        now.getMonth() !== lastReset.getMonth() || 
+                        now.getFullYear() !== lastReset.getFullYear();
 
-        if (hoursDiff >= 24) {
+        if (isNewDay) {
             counter.count = 0;
             counter.lastReset = now;
             counter.views = [];
@@ -224,4 +230,4 @@ app.get('/api/counter/:username/image', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-}); 
+});
